@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useTable, Column, HeaderGroup, Cell } from "react-table";
+import { removeTodo } from "../redux/todoSlices/TodoSlice";
+import { useDispatch } from "react-redux";
 
 type TodoItem = {
   id: string | number | null | undefined;
@@ -14,11 +16,20 @@ type TableProps = {
 };
 
 const TodoList: React.FC<TableProps> = ({ items }) => {
+  const dispatch = useDispatch();
+
+  //remove function
+  const handleRemove = useCallback(
+    (id: string | number | null | undefined) => {
+      dispatch(removeTodo(id));
+    },
+    [dispatch]
+  );
   const columns = React.useMemo<Column<TodoItem>[]>(
     () => [
       {
         Header: "S.No.",
-        accessor: "id",
+        accessor: (row, rowIndex) => rowIndex + 1,
       },
       {
         Header: "TodoText",
@@ -50,8 +61,28 @@ const TodoList: React.FC<TableProps> = ({ items }) => {
           );
         },
       },
+      //actions
+      {
+        Header: "Actions",
+        Cell: ({ row }: { row: any }) => {
+          const todoId = row.original.id as string | number | null | undefined;
+          return (
+            <div className="flex justify-center gap-2">
+              <button className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700">
+                Edit
+              </button>
+              <button
+                className="bg-red-600 text-white px-2 py-1 rounded-md hover:bg-red-700"
+                onClick={() => handleRemove(todoId)}
+              >
+                Remove
+              </button>
+            </div>
+          );
+        },
+      },
     ],
-    []
+    [handleRemove]
   );
 
   const data = React.useMemo(() => items, [items]);
