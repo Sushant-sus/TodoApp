@@ -1,35 +1,51 @@
-import React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useDispatch } from "react-redux";
+import { addTodo } from "../redux/todoSlices/TodoSlice";
 
-interface FormData {
-  id: string;
+type FormData = {
+  id?: string | number | null | undefined;
   todoText: string;
   category: string;
   date: string;
-}
+};
+// interface FormData extends TodoItem {}
 
-interface TodoFormProps {
-  addTodoItem: (newItem: FormData) => void; // Define the prop type for addTodoItem
-}
+const validationSchema = yup.object().shape({
+  todoText: yup.string().required("Todo text is required"),
+  category: yup.string().required("Category is required"),
+  date: yup.string().required("Date is required"),
+});
 
-const TodoForm: React.FC<TodoFormProps> = ({ addTodoItem }) => {
+const TodoForm = () => {
+  const dispatch = useDispatch();
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormData>();
+  } = useForm<FormData>({
+    resolver: yupResolver(validationSchema),
+  });
 
-  const onSubmit: SubmitHandler<FormData> = (data) => {
-    addTodoItem(data); // Call addTodoItem with the form data
-    reset();
-    console.log(data);
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    const { todoText, category, date } = data;
+    dispatch(addTodo({ todoText, category, date }));
+    try {
+      await validationSchema.validate(data);
+      reset();
+      console.log(data);
+    } catch (error: any) {
+      console.error(error.message);
+    }
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex items-center gap-2 p-8 h-1/3 w-fit shadow-xl"
+      className="flex items-center gap-2 p-8 h-1/3 w-fit shadow-2xl"
     >
       <textarea
         {...register("todoText")}
