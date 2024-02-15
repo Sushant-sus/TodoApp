@@ -1,7 +1,8 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useTable, Column, HeaderGroup, Cell } from "react-table";
-import { removeTodo } from "../redux/todoSlices/TodoSlice";
+import { removeTodo, updateTodo } from "../redux/todoSlices/TodoSlice";
 import { useDispatch } from "react-redux";
+import TodoEdit from "./TodoEdit";
 
 type TodoItem = {
   id: string | number | null | undefined;
@@ -17,6 +18,22 @@ type TableProps = {
 
 const TodoList: React.FC<TableProps> = ({ items }) => {
   const dispatch = useDispatch();
+  const [selectedTodo, setSelectedTodo] = useState<TodoItem | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // const [openPopup, setOpenPopup] = useState(false);
+
+  const handleEditClick = (todo: TodoItem) => {
+    setSelectedTodo(todo);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateTodo = useCallback(
+    (updatedTodo: TodoItem) => {
+      dispatch(updateTodo(updatedTodo));
+    },
+    [dispatch]
+  );
 
   //remove function
   const handleRemove = useCallback(
@@ -65,15 +82,18 @@ const TodoList: React.FC<TableProps> = ({ items }) => {
       {
         Header: "Actions",
         Cell: ({ row }: { row: any }) => {
-          const todoId = row.original.id as string | number | null | undefined;
+          const todo = row.original as TodoItem;
           return (
             <div className="flex justify-center gap-2">
-              <button className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700">
+              <button
+                className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700"
+                onClick={() => handleEditClick(todo)}
+              >
                 Edit
               </button>
               <button
                 className="bg-red-600 text-white px-2 py-1 rounded-md hover:bg-red-700"
-                onClick={() => handleRemove(todoId)}
+                onClick={() => handleRemove(todo.id)}
               >
                 Remove
               </button>
@@ -143,6 +163,16 @@ const TodoList: React.FC<TableProps> = ({ items }) => {
           })}
         </tbody>
       </table>
+      {showEditModal && (
+        <TodoEdit
+          todo={selectedTodo}
+          onSave={(updatedTodo) => {
+            handleUpdateTodo(updatedTodo); // Update the todo in the list
+            setShowEditModal(false); // Close the modal
+          }}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 };
